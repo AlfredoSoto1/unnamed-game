@@ -27,7 +27,7 @@ set(VULKAN_STATIC_LIB "${VULKAN_DIR}/lib/vulkan-1.lib")
 # Add preprocessor definitions based on the build type
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     add_definitions(-DUR_DEBUG)
-    add_definitions(-DASSETS_DIR=\"../../../../assets/\")
+    add_definitions(-DASSETS_DIR=\"../../../assets/\")
 elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
     add_definitions(-DUR_RELEASE)
     add_definitions(-DASSETS_DIR)
