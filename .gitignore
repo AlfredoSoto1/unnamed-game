@@ -1,0 +1,14 @@
+# Exclude binaries
+/build
+
+# Required static & dynamic libraries
+/lib
+
+# External dependencies
+/external
+
+# IDE generated
+/.vscode
+/.vs
+
+

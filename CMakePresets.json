@@ -1,0 +1,96 @@
+{
+  "version": 3,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 21,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "base-windows",
+      "hidden": true,
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "cl.exe",
+        "CMAKE_CXX_COMPILER": "cl.exe"
+      },
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      }
+    },
+    {
+      "name": "base-unix",
+      "hidden": true,
+      "generator": "Unix Makefiles",
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "condition": {
+        "type": "notEquals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      }
+    },
+    {
+      "name": "debug",
+      "inherits": [
+        "base-windows"
+      ],
+      "displayName": "Debug",
+      "description": "Debug build with platform-specific settings for Windows",
+      "cacheVariables": {
+        "CMAKE_CONFIGURATION_TYPES": "Debug",
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "name": "release",
+      "inherits": [
+        "base-windows"
+      ],
+      "displayName": "Release",
+      "description": "Release build with platform-specific settings for Windows",
+      "cacheVariables": {
+        "CMAKE_CONFIGURATION_TYPES": "Release",
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    },
+    {
+      "name": "distribution",
+      "inherits": [
+        "base-windows"
+      ],
+      "displayName": "Distribution",
+      "description": "Distribution build with platform-specific settings for Windows",
+      "cacheVariables": {
+        "CMAKE_CONFIGURATION_TYPES": "MinSizeRel",
+        "CMAKE_BUILD_TYPE": "MinSizeRel"
+      }
+    },
+    {
+      "name": "debug-unix",
+      "inherits": [
+        "base-unix"
+      ],
+      "displayName": "Debug",
+      "description": "Debug build with platform-specific settings for Unix",
+      "cacheVariables": {
+        "CMAKE_CONFIGURATION_TYPES": "Debug",
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "name": "release-unix",
+      "inherits": [
+        "base-unix"
+      ],
+      "displayName": "Release",
+      "description": "Release build with platform-specific settings for Unix",
+      "cacheVariables": {
+        "CMAKE_CONFIGURATION_TYPES": "Release",
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    }
+  ]
+}
