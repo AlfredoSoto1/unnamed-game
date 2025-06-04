@@ -7,6 +7,8 @@
  *********************************************************************/
 #pragma once
 
+#include <format>
+
 #include "Types.hpp"
 
 namespace uranium::core {

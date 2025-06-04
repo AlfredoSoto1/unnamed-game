@@ -1,5 +1,5 @@
 /*********************************************************************
- * @file   Types.h
+ * @file   Types.hpp
  * @brief  Contains type definitions and macros used throughout the Uranium
  *         engine.
  *

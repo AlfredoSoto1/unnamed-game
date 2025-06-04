@@ -1,6 +1,6 @@
 /*********************************************************************
- * @file   Platform.h
- * @brief  Platform-specific definitions and macros.
+ * @file   IDisplay.hpp
+ * @brief  Interface for display/window management.
  *
  * @author Alfredo
  * @date   May 2025
@@ -12,66 +12,7 @@
 
 #include "Types.hpp"
 
-// Platform definitions
-#if defined(_WIN32) || defined(_WIN64)
-  #define UR_PLATFORM_WINDOWS  // Define for Windows platform
-#elif defined(__linux__)
-  #define UR_PLATFORM_LINUX  // Define for Linux platform
-#else
-  #error Uranium Engine only supports Windows and Linux platforms.
-#endif
-
-// Compiler checks
-#if defined(_MSC_VER)
-  #define UR_MSVC_COMPILER  // Define for MSVC compiler
-#elif defined(__GNUC__) || defined(__clang__)
-  #define UR_GCC_COMPILER  // Define for GCC/Clang compiler
-#else
-  #error Uranium Engine only supports MSVC, GCC, or Clang compilers.
-#endif
-
-/*
- * Platform and compiler-specific configurations for DLL import/export.
- * - On Windows, only MSVC is supported with `__declspec(dllexport)` and
- * `__declspec(dllimport)`.
- * - On Linux, only GCC/Clang is supported with `__attribute__` for visibility
- * control.
- */
-#if defined(UR_PLATFORM_WINDOWS)
-  #if defined(UR_MSVC_COMPILER)
-    // MSVC-specific definitions for DLL export/import
-    #define UR_EXPORT_DLL __declspec(dllexport)
-    #define UR_IMPORT_DLL __declspec(dllimport)
-  #else
-    #error Uranium Engine requires MSVC on Windows.
-  #endif
-#elif defined(UR_PLATFORM_LINUX)
-  #if defined(UR_GCC_COMPILER)
-  // GCC/Clang-specific definitions for DLL export/import
-    #define UR_EXPORT_DLL __attribute__((visibility("default")))
-    #define UR_IMPORT_DLL __attribute__((visibility("hidden")))
-  #else
-    #error Uranium Engine requires GCC or Clang on Linux.
-  #endif
-#endif
-
-/*
- * API linking macros.
- * These macros define how the Uranium Engine API is linked:
- * - `UR_BUILD_DLL`: When building the Uranium Engine DLL, export the symbols.
- * - `UR_USE_DLL`: When using the Uranium Engine DLL, import the symbols.
- * - If neither is defined, the API is treated as static and no import/export is
- * applied.
- */
-#if defined(UR_BUILD_DLL)
-  #define URANIUM_API UR_EXPORT_DLL
-#elif defined(UR_USE_DLL)
-  #define URANIUM_API UR_IMPORT_DLL
-#else
-  #define URANIUM_API
-#endif
-
-namespace uranium::platform {
+namespace uranium::core {
 
   class Monitor;
 
@@ -81,7 +22,7 @@ namespace uranium::platform {
    * @brief Represents a system's display or window, encapsulating properties
    *        such as resolution, mode, and visual configurations.
    */
-  UR_ABSTRACT_CLASS Display {
+  UR_ABSTRACT_CLASS IDisplay {
   public:
     /**
      * @enum Resolution
@@ -95,6 +36,7 @@ namespace uranium::platform {
       R_1920x1080,
       R_2560x1440,
       R_3840x2160,
+      R_CUSTOM,
     };
 
     /**
@@ -121,7 +63,7 @@ namespace uranium::platform {
 
       uint32_t width = 800;
       uint32_t height = 600;
-      uint32_t opacity = 100;
+      uint8_t opacity = 255;
       Mode mode = Mode::WINDOWED;
       Resolution resolution = Resolution::R_800x600;
 
@@ -130,8 +72,8 @@ namespace uranium::platform {
       uint32_t antialiasingLevel = 1;
 
       bool vsync = true;
+      bool visible = true;
       bool resizable = true;
-      bool transparent = false;
     };
 
     /**
@@ -141,20 +83,14 @@ namespace uranium::platform {
     static const Properties DEFAULT;
 
     /**
-     * @brief Constructor for Display.
+     * @brief Constructor for IDisplay.
      * @param properties Configuration properties for the display.
      * @param smonitor A reference to the Monitor for system-specific
-     * operations.
+     *        operations.
      */
-    explicit Display(const Properties& properties,
-                     const Monitor& smonitor) noexcept;
-    virtual ~Display() = default;
-
-    /**
-     * @brief Initializes the display.
-     *        This must be implemented by derived classes.
-     */
-    virtual void init() = 0;
+    explicit IDisplay(const Properties& properties,
+                      const Monitor& smonitor) noexcept;
+    virtual ~IDisplay() = default;
 
     /**
      * @brief Closes and cleans up the display.
@@ -194,10 +130,23 @@ namespace uranium::platform {
     virtual void setResolution(Resolution resolution) = 0;
 
     /**
-     * @brief Sets the opacity level of the display.
-     * @param opacity Opacity level (0-100).
+     * @brief Sets the display resolution.
+     * @param width
+     * @param height
      */
-    virtual void setOpacity(uint32_t opacity) = 0;
+    virtual void setResolution(uint32_t width, uint32_t height) = 0;
+
+    /**
+     * @brief Sets the opacity level of the display.
+     * @param opacity Opacity level (0-255).
+     */
+    virtual void setOpacity(uint8_t opacity) = 0;
+
+    /**
+     * @brief Sets the visibility of the display.
+     * @param visible True to show the display, false to hide it.
+     */
+    virtual void setVisible(bool visible) = 0;
 
     /**
      * @brief Sets the display's position on the screen.
@@ -219,18 +168,6 @@ namespace uranium::platform {
     virtual void enableVsync(bool enable) = 0;
 
     /**
-     * @brief Enables or disables resizing of the display.
-     * @param enable True to enable, false to disable.
-     */
-    virtual void enableResize(bool enable) = 0;
-
-    /**
-     * @brief Enables or disables transparency of the display.
-     * @param enable True to enable, false to disable.
-     */
-    virtual void enableTransparency(bool enable) = 0;
-
-    /**
      * @brief Focuses the display window.
      */
     virtual void focus() = 0;
@@ -239,11 +176,6 @@ namespace uranium::platform {
      * @brief Restores the display to its original state (e.g., from minimized).
      */
     virtual void restore() = 0;
-
-    /**
-     * @brief Temporarily "loses" attention from the display.
-     */
-    virtual void loseAttention() = 0;
 
     /**
      * @brief Requests attention (e.g., flashes the display icon).
@@ -291,4 +223,4 @@ namespace uranium::platform {
     Properties properties;
     bool initialized;
   };
-}  // namespace uranium::platform
+}  // namespace uranium::core
