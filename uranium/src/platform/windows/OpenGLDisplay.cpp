@@ -1,4 +1,4 @@
-#include "uranium/platform/windows/WindowsDisplay.hpp"
+#include "uranium/platform/windows/OpenGLDisplay.hpp"
 
 #include "GLFW/glfw3.h"
 #include "uranium/core/Logger.hpp"
@@ -6,27 +6,9 @@
 using namespace uranium::core;
 using namespace uranium::platform::windows;
 
-WindowsDisplay::WindowsDisplay(GraphicsAPI gapi,
-                               const core::IDisplay::Properties& properties,
-                               const core::Monitor& smonitor) noexcept
-    : core::IDisplay(properties, smonitor), gapi(gapi) {
-  switch (gapi) {
-    case GraphicsAPI::OPENGL:
-      initOpenGL();
-      break;
-    case GraphicsAPI::VULKAN:
-      initVulkan();
-      break;
-    case GraphicsAPI::DIRECTX:
-      initDirectX();
-      break;
-      // default:
-      // throw std::runtime_error("Unsupported graphics API for
-      // WindowsDisplay");
-  }
-}
-
-void WindowsDisplay::initOpenGL() noexcept {
+OpenGLDisplay::OpenGLDisplay(const core::IDisplay::Properties& properties,
+                             const core::Monitor& smonitor) noexcept
+    : core::IDisplay(properties, smonitor) {
   if (!glfwInit()) {
     Logger::UR_FATAL(LogCategory::ENGINE,
                      "Failed to initialize GLFW for OpenGL.");
@@ -37,14 +19,15 @@ void WindowsDisplay::initOpenGL() noexcept {
   // glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
+  glfwWindowHint(GLFW_FOCUSED, GLFW_TRUE);
   glfwWindowHint(GLFW_VISIBLE, properties.visible ? GLFW_TRUE : GLFW_FALSE);
   glfwWindowHint(GLFW_RESIZABLE, properties.resizable ? GLFW_TRUE : GLFW_FALSE);
-  glfwWindowHint(GLFW_FOCUSED,
-                 properties.mode == Mode::WINDOWED ? GLFW_TRUE : GLFW_FALSE);
   glfwWindowHint(GLFW_DECORATED,
                  properties.mode != Mode::BORDERLESS ? GLFW_TRUE : GLFW_FALSE);
+  glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER,
+                 properties.opacity < 255 ? GL_TRUE : GL_FALSE);
 
-  glfwWindowHint(GLFW_CENTER_CURSOR, GLFW_TRUE);
+  // glfwWindowHint(GLFW_CENTER_CURSOR, GLFW_TRUE);
 
   glfwWindow = glfwCreateWindow(properties.width, properties.height,
                                 properties.title.c_str(), nullptr, nullptr);
@@ -61,37 +44,45 @@ void WindowsDisplay::initOpenGL() noexcept {
   }
 }
 
-void WindowsDisplay::initVulkan() noexcept {
-  // Initialize Vulkan
-}
-
-void WindowsDisplay::initDirectX() noexcept {
-  // Initialize DirectX
-}
-
-void WindowsDisplay::close() {}
-
-void WindowsDisplay::setTitle(const std::string& title) {
+void OpenGLDisplay::close() {
   if (!glfwWindow) {
-    Logger::UR_WARN(LogCategory::ENGINE,
-                    "Cannot set title without a valid GLFW window.");
+    Logger::UR_ERROR(LogCategory::ENGINE,
+                     "Cannot close OpenGL without a valid GLFW window.");
+    return;
+  }
+  glfwDestroyWindow(glfwWindow);
+  glfwTerminate();
+}
+
+void OpenGLDisplay::reload(const Properties& properties) {
+  if (!glfwWindow) {
+    Logger::UR_ERROR(LogCategory::ENGINE,
+                     "Cannot reload without a valid GLFW window.");
+    return;
+  }
+}
+
+void OpenGLDisplay::setTitle(const std::string& title) {
+  if (!glfwWindow) {
+    Logger::UR_ERROR(LogCategory::ENGINE,
+                     "Cannot set title without a valid GLFW window.");
     return;
   }
   properties.title = title;
   glfwSetWindowTitle(glfwWindow, title.c_str());
 }
 
-void WindowsDisplay::setIcon(const std::string& icon_path) {}
+void OpenGLDisplay::setIcon(const std::string& icon_path) {}
 
-void WindowsDisplay::resize(uint32_t width, uint32_t height) {
+void OpenGLDisplay::resize(uint32_t width, uint32_t height) {
   if (!glfwWindow) {
-    Logger::UR_WARN(LogCategory::ENGINE,
-                    "Cannot resize without a valid GLFW window.");
+    Logger::UR_ERROR(LogCategory::ENGINE,
+                     "Cannot resize without a valid GLFW window.");
     return;
   }
   if (width == 0 || height == 0) {
-    Logger::UR_WARN(LogCategory::ENGINE,
-                    "Invalid dimensions for resizing: {}x{}.", width, height);
+    Logger::UR_ERROR(LogCategory::ENGINE,
+                     "Invalid dimensions for resizing: {}x{}.", width, height);
     return;
   }
   properties.width = width;
@@ -99,10 +90,10 @@ void WindowsDisplay::resize(uint32_t width, uint32_t height) {
   glfwSetWindowSize(glfwWindow, width, height);
 }
 
-void WindowsDisplay::setMode(Mode mode) {
+void OpenGLDisplay::setMode(Mode mode) {
   if (!glfwWindow) {
-    Logger::UR_WARN(LogCategory::ENGINE,
-                    "Cannot set mode without a valid GLFW window.");
+    Logger::UR_ERROR(LogCategory::ENGINE,
+                     "Cannot set mode without a valid GLFW window.");
     return;
   }
 
@@ -148,10 +139,10 @@ void WindowsDisplay::setMode(Mode mode) {
   }
 }
 
-void WindowsDisplay::setResolution(Resolution resolution) {
+void OpenGLDisplay::setResolution(Resolution resolution) {
   if (!glfwWindow) {
-    Logger::UR_WARN(LogCategory::ENGINE,
-                    "Cannot set resolution without a valid GLFW window.");
+    Logger::UR_ERROR(LogCategory::ENGINE,
+                     "Cannot set resolution without a valid GLFW window.");
     return;
   }
 
@@ -181,8 +172,8 @@ void WindowsDisplay::setResolution(Resolution resolution) {
       properties.height = 2160;
       break;
     default:
-      Logger::UR_WARN(LogCategory::ENGINE, "Invalid resolution specified: {}.",
-                      "R_CUSTOM");
+      Logger::UR_ERROR(LogCategory::ENGINE, "Invalid resolution specified: {}.",
+                       "R_CUSTOM");
       return;
   }
 
@@ -190,15 +181,15 @@ void WindowsDisplay::setResolution(Resolution resolution) {
   glfwSetWindowSize(glfwWindow, properties.width, properties.height);
 }
 
-void WindowsDisplay::setResolution(uint32_t width, uint32_t height) {
+void OpenGLDisplay::setResolution(uint32_t width, uint32_t height) {
   if (!glfwWindow) {
-    Logger::UR_WARN(LogCategory::ENGINE,
-                    "Cannot set resolution without a valid GLFW window.");
+    Logger::UR_ERROR(LogCategory::ENGINE,
+                     "Cannot set resolution without a valid GLFW window.");
     return;
   }
   if (width == 0 || height == 0) {
-    Logger::UR_WARN(LogCategory::ENGINE,
-                    "Invalid resolution dimensions: {}x{}.", width, height);
+    Logger::UR_ERROR(LogCategory::ENGINE,
+                     "Invalid resolution dimensions: {}x{}.", width, height);
     return;
   }
   properties.width = width;
@@ -213,9 +204,10 @@ constexpr uint8_t clamp(uint8_t value, uint8_t min, uint8_t max) {
                                               : value);
 }
 
-void WindowsDisplay::setOpacity(uint8_t opacity) {
+void OpenGLDisplay::setOpacity(uint8_t opacity) {
   if (!glfwWindow) {
-    Logger::UR_WARN(LogCategory::ENGINE, "Invalid opacity value: {}.", opacity);
+    Logger::UR_ERROR(LogCategory::ENGINE, "Invalid opacity value: {}.",
+                     opacity);
     return;
   }
   opacity = clamp(opacity, 0u, 255u);
@@ -228,10 +220,10 @@ void WindowsDisplay::setOpacity(uint8_t opacity) {
   glfwSetWindowOpacity(glfwWindow, static_cast<float>(opacity) / 255.0f);
 }
 
-void WindowsDisplay::setVisible(bool visible) {
+void OpenGLDisplay::setVisible(bool visible) {
   if (!glfwWindow) {
-    Logger::UR_WARN(LogCategory::ENGINE,
-                    "Cannot set visibility without a valid GLFW window.");
+    Logger::UR_ERROR(LogCategory::ENGINE,
+                     "Cannot set visibility without a valid GLFW window.");
     return;
   }
   properties.visible = visible;
@@ -239,10 +231,10 @@ void WindowsDisplay::setVisible(bool visible) {
                       visible ? GLFW_TRUE : GLFW_FALSE);
 }
 
-void WindowsDisplay::setPosition(uint32_t xpos, uint32_t ypos) {
+void OpenGLDisplay::setPosition(uint32_t xpos, uint32_t ypos) {
   if (!glfwWindow) {
-    Logger::UR_WARN(LogCategory::ENGINE,
-                    "Cannot set position without a valid GLFW window.");
+    Logger::UR_ERROR(LogCategory::ENGINE,
+                     "Cannot set position without a valid GLFW window.");
     return;
   }
   properties.xposition = xpos;
@@ -250,38 +242,38 @@ void WindowsDisplay::setPosition(uint32_t xpos, uint32_t ypos) {
   glfwSetWindowPos(glfwWindow, xpos, ypos);
 }
 
-void WindowsDisplay::setAntialiasLevel(uint32_t antialias_level) {}
+void OpenGLDisplay::setAntialiasLevel(uint32_t antialias_level) {}
 
-void WindowsDisplay::enableVsync(bool enable) {
+void OpenGLDisplay::enableVsync(bool enable) {
   if (!glfwWindow) {
-    Logger::UR_WARN(LogCategory::ENGINE,
-                    "V-Sync cannot be enabled without a valid window.");
+    Logger::UR_ERROR(LogCategory::ENGINE,
+                     "V-Sync cannot be enabled without a valid window.");
     return;
   }
   glfwSwapInterval(enable ? 1 : 0);
 }
 
-void WindowsDisplay::focus() {
+void OpenGLDisplay::focus() {
   if (!glfwWindow) {
-    Logger::UR_WARN(LogCategory::ENGINE,
-                    "Focus cannot be set without a valid window.");
+    Logger::UR_ERROR(LogCategory::ENGINE,
+                     "Focus cannot be set without a valid window.");
     return;
   }
   glfwFocusWindow(glfwWindow);
 }
 
-void WindowsDisplay::restore() {
+void OpenGLDisplay::restore() {
   if (!glfwWindow) {
-    Logger::UR_WARN(LogCategory::ENGINE,
-                    "Restore cannot be performed without a valid window.");
+    Logger::UR_ERROR(LogCategory::ENGINE,
+                     "Restore cannot be performed without a valid window.");
     return;
   }
   glfwRestoreWindow(glfwWindow);
 }
 
-void WindowsDisplay::requestAttention() {
+void OpenGLDisplay::requestAttention() {
   if (!glfwWindow) {
-    Logger::UR_WARN(
+    Logger::UR_ERROR(
         LogCategory::ENGINE,
         "Request attention cannot be performed without a valid window.");
     return;

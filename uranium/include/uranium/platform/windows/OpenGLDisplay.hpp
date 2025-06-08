@@ -1,5 +1,5 @@
 /*********************************************************************
- * @file   WindowsDisplay.hpp
+ * @file   OpenGLDisplay.hpp
  * @brief  Interface for Windows platform-specific functionality.
  *
  * @author Alfredo
@@ -13,31 +13,27 @@ struct GLFWwindow;
 
 namespace uranium::platform::windows {
 
-  UR_ABSTRACT_CLASS WindowsDisplay final : UR_EXTENDS core::IDisplay {
+  UR_ABSTRACT_CLASS OpenGLDisplay final : UR_EXTENDS core::IDisplay {
   public:
     /**
-     * @brief Enumeration of supported graphics APIs.
-     * @note  This is used to specify which graphics API Uranium engine
-     *        supports on a windows display for rendering.
-     */
-    enum class GraphicsAPI { OPENGL, DIRECTX, VULKAN };
-
-  public:
-    /**
-     * @brief Constructor for WindowsDisplay.
-     * @param gapi The graphics API to be used for rendering.
+     * @brief Constructor for OpenGLDisplay.
      * @param properties Configuration properties for the display.
      * @param smonitor A reference to the Monitor for system-specific
      *        operations.
      */
-    explicit WindowsDisplay(GraphicsAPI gapi,
-                            const core::IDisplay::Properties& properties,
-                            const core::Monitor& smonitor) noexcept;
+    explicit OpenGLDisplay(const core::IDisplay::Properties& properties,
+                           const core::Monitor& smonitor) noexcept;
 
     /**
      * @brief Closes and cleans up the GLFW window.
      */
     virtual void close() override;
+
+    /**
+     * @brief Reloads the display.
+     * @param properties New properties for the display.
+     */
+    virtual void reload(const core::IDisplay::Properties& properties) override;
 
     /**
      * @brief Updates the display's title.
@@ -124,13 +120,7 @@ namespace uranium::platform::windows {
     virtual void requestAttention() override;
 
   private:
-    GraphicsAPI gapi;
     GLFWwindow* glfwWindow;
-
-  private:
-    void initOpenGL() noexcept;
-    void initVulkan() noexcept;
-    void initDirectX() noexcept;
   };
 
 }  // namespace uranium::platform::windows

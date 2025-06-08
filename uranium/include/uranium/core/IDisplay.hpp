@@ -14,7 +14,7 @@
 
 namespace uranium::core {
 
-  class Monitor;
+  class IMonitor;
 
   /**
    * @class Display
@@ -89,7 +89,7 @@ namespace uranium::core {
      *        operations.
      */
     explicit IDisplay(const Properties& properties,
-                      const Monitor& smonitor) noexcept;
+                      const IMonitor& smonitor) noexcept;
     virtual ~IDisplay() = default;
 
     /**
@@ -97,6 +97,12 @@ namespace uranium::core {
      *        This must be implemented by derived classes.
      */
     virtual void close() = 0;
+
+    /**
+     * @brief Reloads the display.
+     * @param properties New properties for the display.
+     */
+    virtual void reload(const Properties& properties) = 0;
 
     /**
      * @brief Updates the display's title.
