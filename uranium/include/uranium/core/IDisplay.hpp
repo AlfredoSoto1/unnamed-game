@@ -67,8 +67,8 @@ namespace uranium::core {
       Mode mode = Mode::WINDOWED;
       Resolution resolution = Resolution::R_800x600;
 
-      uint32_t xposition = 0;
-      uint32_t yposition = 0;
+      int32_t xposition = 0;
+      int32_t yposition = 0;
       uint32_t antialiasingLevel = 1;
 
       bool vsync = true;
@@ -76,6 +76,7 @@ namespace uranium::core {
       bool resizable = true;
     };
 
+  public:
     /**
      * @brief Default properties for the display.
      *        This can be used to initialize a display with standard settings.
@@ -125,9 +126,10 @@ namespace uranium::core {
 
     /**
      * @brief Sets the display mode (e.g., windowed, fullscreen).
+     * @param monitor
      * @param mode New mode for the display.
      */
-    virtual void setMode(Mode mode) = 0;
+    virtual void setMode(IMonitor * monitor, Mode mode) = 0;
 
     /**
      * @brief Sets the display resolution.
@@ -159,7 +161,14 @@ namespace uranium::core {
      * @param xpos X-coordinate of the new position.
      * @param ypos Y-coordinate of the new position.
      */
-    virtual void setPosition(uint32_t xpos, uint32_t ypos) = 0;
+    virtual void setPosition(int32_t xpos, int32_t ypos) = 0;
+
+    /**
+     * @brief Centers the window onto a given monitor.
+     *
+     * @param monitor
+     */
+    virtual void center(const IMonitor& monitor) = 0;
 
     /**
      * @brief Sets the anti-aliasing level for rendering.
@@ -201,11 +210,18 @@ namespace uranium::core {
     uint32_t getHeight() const;
 
     /**
+     * @brief Get the Aspect Ratio of the display.
+     *
+     * @return uint32_t
+     */
+    float getAspectRatio() const;
+
+    /**
      * @brief Gets the current position of the display on the screen.
      * @param xpos Pointer to store the X-coordinate.
      * @param ypos Pointer to store the Y-coordinate.
      */
-    void getPosition(uint32_t* xpos, uint32_t* ypos) const;
+    void getPosition(int32_t* xpos, int32_t* ypos) const;
 
     /**
      * @brief Gets the current mode of the display.
@@ -226,7 +242,7 @@ namespace uranium::core {
     bool hasInitialized() const;
 
   protected:
-    Properties properties;
     bool initialized;
+    Properties properties;
   };
 }  // namespace uranium::core

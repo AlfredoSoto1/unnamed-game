@@ -1,13 +1,15 @@
 #include "uranium/platform/windows/OpenGLDisplay.hpp"
 
-#include "GLFW/glfw3.h"
+#include <GLFW/glfw3.h>
+
+#include "uranium/core/IMonitor.hpp"
 #include "uranium/core/Logger.hpp"
 
 using namespace uranium::core;
 using namespace uranium::platform::windows;
 
 OpenGLDisplay::OpenGLDisplay(const core::IDisplay::Properties& properties,
-                             const core::Monitor& smonitor) noexcept
+                             const core::IMonitor& smonitor) noexcept
     : core::IDisplay(properties, smonitor) {
   if (!glfwInit()) {
     Logger::UR_FATAL(LogCategory::ENGINE,
@@ -90,7 +92,7 @@ void OpenGLDisplay::resize(uint32_t width, uint32_t height) {
   glfwSetWindowSize(glfwWindow, width, height);
 }
 
-void OpenGLDisplay::setMode(Mode mode) {
+void OpenGLDisplay::setMode(IMonitor* monitor, Mode mode) {
   if (!glfwWindow) {
     Logger::UR_ERROR(LogCategory::ENGINE,
                      "Cannot set mode without a valid GLFW window.");
@@ -99,7 +101,7 @@ void OpenGLDisplay::setMode(Mode mode) {
 
   // If the current mode is FULLSCREEN, we need to restore the window
   // position and size before changing the mode.
-  if (properties.mode == Mode::FULLSCREEN) {
+  if (properties.mode == Mode::FULLSCREEN && mode != properties.mode) {
     glfwSetWindowMonitor(glfwWindow,
                          0,  // Use primary monitor if no monitor is specified
                          properties.xposition,  // Use current position
@@ -129,12 +131,23 @@ void OpenGLDisplay::setMode(Mode mode) {
       glfwSetWindowAttrib(glfwWindow, GLFW_RESIZABLE, GLFW_FALSE);
       break;
     case Mode::FULLSCREEN:
-      // if (smonitor == nullptr) {
-      //   // If no monitor is specified, use the primary monitor
-      // }
-      // glfwGetWindowPos(glfwWindow, &xpos, &ypos);
-      // glfwSetWindowMonitor(glfwWindow, smonitor.get(), 0, 0, width, height,
-      // 0);
+      if (!monitor) {
+        Logger::UR_ERROR(
+            LogCategory::ENGINE,
+            "Cannot set fullscreen without a monitor (must provide).");
+        return;
+      }
+
+      glfwGetWindowPos(glfwWindow,              // glfw ptr
+                       &properties.xposition,   // xpos
+                       &properties.yposition);  // ypos
+
+      glfwSetWindowMonitor(glfwWindow,         // glfw ptr
+                           *monitor,           // GLFWmonitor
+                           0, 0,               // position; zero default
+                           properties.width,   // width
+                           properties.height,  // height
+                           0);
       break;
   }
 }
@@ -231,7 +244,7 @@ void OpenGLDisplay::setVisible(bool visible) {
                       visible ? GLFW_TRUE : GLFW_FALSE);
 }
 
-void OpenGLDisplay::setPosition(uint32_t xpos, uint32_t ypos) {
+void OpenGLDisplay::setPosition(int32_t xpos, int32_t ypos) {
   if (!glfwWindow) {
     Logger::UR_ERROR(LogCategory::ENGINE,
                      "Cannot set position without a valid GLFW window.");
@@ -240,6 +253,27 @@ void OpenGLDisplay::setPosition(uint32_t xpos, uint32_t ypos) {
   properties.xposition = xpos;
   properties.yposition = ypos;
   glfwSetWindowPos(glfwWindow, xpos, ypos);
+}
+
+void OpenGLDisplay::center(const IMonitor& monitor) {
+  if (!glfwWindow) {
+    Logger::UR_ERROR(LogCategory::ENGINE,
+                     "Cannot center display without a valid GLFW window.");
+    return;
+  }
+
+  // Check if the display is capable of being centered
+  if (properties.mode != Mode::BORDERLESS ||
+      properties.mode != Mode::WINDOWED) {
+    Logger::UR_WARN(LogCategory::ENGINE,
+                    "Cannot center a non borderless/windowed display.");
+    return;
+  }
+
+  // Get the monitor resolution, and calulate the center position
+  uint32_t width, height;
+  monitor.getResolution(&width, &height);
+  setPosition((width - properties.width) / 2, (height - properties.height) / 2);
 }
 
 void OpenGLDisplay::setAntialiasLevel(uint32_t antialias_level) {}

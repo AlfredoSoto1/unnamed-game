@@ -19,10 +19,10 @@ namespace uranium::platform::windows {
      * @brief Constructor for OpenGLDisplay.
      * @param properties Configuration properties for the display.
      * @param smonitor A reference to the Monitor for system-specific
-     *        operations.
+     *        operations. (You can change this at runtime)
      */
     explicit OpenGLDisplay(const core::IDisplay::Properties& properties,
-                           const core::Monitor& smonitor) noexcept;
+                           const core::IMonitor& smonitor) noexcept;
 
     /**
      * @brief Closes and cleans up the GLFW window.
@@ -56,9 +56,10 @@ namespace uranium::platform::windows {
 
     /**
      * @brief Sets the display mode (e.g., windowed, fullscreen).
+     * @param monitor
      * @param mode New mode for the display.
      */
-    virtual void setMode(Mode mode) override;
+    virtual void setMode(core::IMonitor * monitor, Mode mode) override;
 
     /**
      * @brief Sets the display resolution.
@@ -90,7 +91,14 @@ namespace uranium::platform::windows {
      * @param xpos X-coordinate of the new position.
      * @param ypos Y-coordinate of the new position.
      */
-    virtual void setPosition(uint32_t xpos, uint32_t ypos) override;
+    virtual void setPosition(int32_t xpos, int32_t ypos) override;
+
+    /**
+     * @brief Centers the window onto a given monitor.
+     *
+     * @param monitor
+     */
+    virtual void center(const core::IMonitor& monitor) override;
 
     /**
      * @brief Sets the anti-aliasing level for rendering.

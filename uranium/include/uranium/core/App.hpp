@@ -9,8 +9,8 @@
 
 #include <memory>
 #include <string>
-#include <vector>
 
+#include "IMonitor.hpp"
 #include "Types.hpp"
 
 namespace uranium::core {
@@ -38,6 +38,24 @@ namespace uranium::core {
     // virtual void onInit() = 0;
     // virtual void onUpdate() = 0;
     // virtual void onShutdown() = 0;
+
+    /**
+     * @brief Provides the primary monitor.
+     *
+     * @return const IMonitor*
+     */
+    virtual const IMonitor* primaryMonitor() = 0;
+
+    /**
+     * @brief Changes all settings related to a monitor to the one being
+     *        selected.
+     *
+     * @return const IMonitor*
+     */
+    virtual const IMonitor* selectMonitor(uint32_t selection) = 0;
+
+  protected:
+    std::unique_ptr<IMonitor> monitor;
 
   private:
     void init();

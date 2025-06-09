@@ -2,12 +2,14 @@
 
 #include "uranium/core/AppEntry.hpp"
 #include "uranium/core/Logger.hpp"
+#include "uranium/platform/windows/OpenGLApp.hpp"
 
 using namespace uranium::core;
+using namespace uranium::platform::windows;
 
-class MyApplication : public uranium::core::IApp {
+class MyApplication final : public OpenGLApp {
 public:
-  MyApplication() noexcept {
+  MyApplication() noexcept : OpenGLApp() {
     std::cout << "MyApplication initialized" << std::endl;
   }
 

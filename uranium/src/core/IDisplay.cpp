@@ -19,7 +19,7 @@ const IDisplay::Properties IDisplay::DEFAULT = {
 };
 
 IDisplay::IDisplay(const Properties& properties,
-                   const Monitor& smonitor) noexcept
+                   const IMonitor& smonitor) noexcept
     : properties(properties), initialized(false) {}
 
 uint32_t IDisplay::getWidth() const {
@@ -32,7 +32,11 @@ uint32_t IDisplay::getHeight() const {
   return properties.height;
 }
 
-void IDisplay::getPosition(uint32_t* xpos, uint32_t* ypos) const {
+float IDisplay::getAspectRatio() const {
+  return (float)properties.width / (float)properties.height;
+}
+
+void IDisplay::getPosition(int32_t* xpos, int32_t* ypos) const {
   *xpos = xpos != nullptr ? properties.xposition : 0;
   *ypos = ypos != nullptr ? properties.yposition : 0;
 }

@@ -7,39 +7,20 @@
  *******************************************************************/
 #pragma once
 
-#include <memory>
-#include <vector>
-
 #include "Types.hpp"
+
+struct GLFWmonitor;
+
+namespace uranium::platform::windows {
+  UR_DECLARE OpenGLApp;
+}
 
 namespace uranium::core {
 
-  class MonitorFactory final {
-  public:
-    /**
-     * @brief Creates a monitor instance based on the selection criteria.
-     *
-     * @param selection The selection criteria for the monitor.
-     * @return std::unique_ptr<IMonitor> A unique pointer to the created
-     * monitor.
-     */
-    static std::unique_ptr<IMonitor> findMonitor(IMonitor::Selection selection);
-
-    /**
-     * @brief Retrieves a list of available monitors on the system.
-     *
-     * @return std::vector<std::unique_ptr<IMonitor>> A vector of unique
-     *         pointers to the available monitors.
-     */
-    static std::vector<std::unique_ptr<IMonitor>> getMonitors();
-  };
-
   UR_ABSTRACT_CLASS IMonitor final {
   public:
-    enum class Selection {
-      PRIMARY,
-      ANY,
-    };
+    IMonitor(const IMonitor&) = delete;
+    IMonitor& operator=(const IMonitor&) = delete;
 
   public:
     /**
@@ -64,9 +45,23 @@ namespace uranium::core {
      */
     void getResolution(uint32_t* width, uint32_t* height) const;
 
+    /**
+     * @brief Overload for the cast operator
+     *
+     * @return GLFWmonitor*
+     */
+    operator GLFWmonitor*() const;
+
   private:
-    explicit IMonitor() noexcept = default;
-    virtual ~IMonitor() noexcept = default;
+    explicit IMonitor(GLFWmonitor * monitor) noexcept;
+
+  private:
+    friend platform::windows::OpenGLApp;
+    friend void callback(GLFWmonitor * monitor, int event);
+
+  private:
+    bool is_connected;
+    GLFWmonitor* monitor;
   };
 
 }  // namespace uranium::core
